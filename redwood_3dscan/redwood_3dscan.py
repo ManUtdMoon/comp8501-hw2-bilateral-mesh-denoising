@@ -16,6 +16,8 @@ import time
 import os
 import sys
 
+proj_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(proj_dir)
 
 def _load_json(file_name):
     with open(file_name, 'r') as f:
@@ -59,13 +61,13 @@ def _download(url, dst_file, skip_if_exists=True):
 
 
 # List of RGBD image ids.
-rgbds = _load_json("rgbds.json")
+rgbds = _load_json(proj_dir + "/rgbds.json")
 
 # List of mesh ids.
-meshes = _load_json("meshes.json")
+meshes = _load_json(proj_dir + "/meshes.json")
 
 # Dictionary with {"category_0": [id_0, id_1, ...]}.
-categories = _load_json("categories.json")
+categories = _load_json(proj_dir + "/categories.json")
 
 _base_url = "https://redwood-3dscan.b-cdn.net"
 _pwd = os.path.dirname(os.path.abspath(
