@@ -1,0 +1,21 @@
+b. Mesh Denoising
+
+(1) Implement a Mesh Denoising algorithm;
+
+(2) Use the implemented algorithm to denoise mesh in a 3D model;
+
+(3) To test the algorithm, you can add noise to the existing model with Blender, or you may consider the scanned dataset. Here is a list of scanned datasets you may be interested in:
+
+http://www.michaelfirman.co.uk/RGBDdatasets/index.html
+http://redwood-data.org/3dscan/
+
+---
+Requirements:
+
+1. Please accomplish ONE of the three tasks;
+
+2. Recommended programming languages: C++/Java/Python/MATLAB;
+
+3. Technical report (printed as pdf), resource data (e.g. 3D model, texture map), source code and instruction file are expected to be submitted in Moodle;
+
+4. In your technical report, you should cover your implementation details, present your results, and evaluate them via comprehensive discussion. Also, please give proper references.
