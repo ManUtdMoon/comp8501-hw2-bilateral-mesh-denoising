@@ -56,13 +56,13 @@ def bilateral_mesh_denoising(mesh):
         assert sigma_s.shape == ()
 
         # weighted sum
-        diffs = - (vertex - neighbours) # (B, 3)
+        diffs = neighbours - vertex # (B, 3), vertex should move towards neighbours so vector starts from vertex
         ds = np.linalg.norm(diffs, axis=1)  # (B,)
         dr = np.dot(diffs, v_normals[i]) # (B,)
 
-        w = np.exp(-ds**2 / 2 * sigma_c**2) * np.exp(-dr**2 / 2 * sigma_s**2) # (B,)
+        w = np.exp(-ds**2 / 2 / sigma_c**2) * np.exp(-dr**2 / 2 / sigma_s**2) # (B,)
         summation = np.sum(w * dr)
-        normalizer = np.sum(w)
+        normalizer = np.sum(w) + 1e-6 # avoid division by zero
         de_vertices[i] = vertex + v_normals[i] * summation / normalizer
 
     # update mesh
