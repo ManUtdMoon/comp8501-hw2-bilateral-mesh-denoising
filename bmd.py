@@ -72,37 +72,26 @@ def bilateral_mesh_denoising(mesh):
     return mesh
 
 
-def bmd_n_iter(mesh, n_iter):
+def bmd_n_iter(mesh, n_iter, mesh_name):
     """
     Perform bilateral mesh denoising for n iterations.
     """
-    for _ in range(n_iter):
+    for i in range(n_iter):
         mesh = bilateral_mesh_denoising(
             mesh
         )
+        o3d.io.write_triangle_mesh(f"data/mesh/denoised_iter_{i}_{mesh_name}.ply", mesh)
     return mesh
 
 
 @click.command()
-@click.option("-m", "--mesh_name", required=True, default="bunny.obj")
+@click.option("-m", "--mesh_name", required=True, default="noised_drill.ply")
 def main(mesh_name):
     # read mesh file and prepare for visualization
     mesh = o3d.io.read_triangle_mesh(f"data/mesh/{mesh_name}")
-    rot = mesh.get_rotation_matrix_from_xyz((0, np.pi, 0))
-    mesh.rotate(rot, center=mesh.get_center())
     mesh.compute_vertex_normals()
 
-    # add noise to the mesh
-    vertices = np.asarray(mesh.vertices)
-    v_normals = np.asarray(mesh.vertex_normals)
-    noise = 1e-4 * 2 * (np.random.rand(*vertices.shape) - 0.5) * v_normals
-    noised_vertices = vertices + noise
-    
-    # visualize the noised mesh
-    mesh.vertices = o3d.utility.Vector3dVector(noised_vertices)
-    mesh.compute_vertex_normals()
-    o3d.visualization.draw_geometries([mesh])
-
+    # some stats
     vertices = np.asarray(mesh.vertices)
     triangles = np.asarray(mesh.triangles)
 
@@ -113,9 +102,10 @@ def main(mesh_name):
     )
 
     # perform bilateral mesh denoising
-    new_mesh = bmd_n_iter(mesh, 1)
+    mesh_name = mesh_name.split(".")[0]
+    new_mesh = bmd_n_iter(mesh, 3, mesh_name)
     new_mesh.compute_vertex_normals()
-    o3d.visualization.draw_geometries([new_mesh])
+    # o3d.visualization.draw_geometries([new_mesh])
 
 
 if __name__ == "__main__":
