@@ -10,22 +10,16 @@ def bilateral_mesh_denoising(mesh):
 
     Parameters
     @mesh
-        @vertices: np.ndarray (float)
+        vertices: np.ndarray (float)
             Vertices of the mesh (location).
-        @triangles: np.ndarray (int)
-            Triangles of the mesh (index of vertices).
-        @v_normals: np.ndarray (float)
+        v_normals: np.ndarray (float)
             Vertex normals of the mesh.
-    @sigma_s: float, optional
-        Spatial sigma, by default 1.
-    @sigma_r: float, optional
-        Range sigma, by default 0.1.
 
     Returns
     @de_vertices: np.ndarray
         Denoised vertices array.
     """
-    ## prepare
+    # prepare
     mesh.compute_vertex_normals()
     mesh.compute_adjacency_list()
     vertices = np.asarray(mesh.vertices)
@@ -38,30 +32,35 @@ def bilateral_mesh_denoising(mesh):
         vertices, leave=False, mininterval=1
     )
     for i, vertex in enumerate(pbar):
+        # skip isolated vertices
         this_neighbour_indices = list(mesh.adjacency_list[i])
         if len(this_neighbour_indices) == 0:
             de_vertices[i] = vertex
             continue
-        ## compute sigma_c
+
+        # compute sigma_c: the minimum distance to the neighbours
         this_neighbour_vertices = vertices[this_neighbour_indices]
         dists = np.linalg.norm(this_neighbour_vertices - vertex, axis=1)
-        sigma_c = np.min(dists) if len(dists) > 1 else dists
+        sigma_c = np.min(dists)
         radius = 2 * sigma_c
+        assert sigma_c.shape == ()
 
-        ## find neighbours
+        # compute sigma_s
+        ## find neighbours within the radius
         _, neightbours_idx, _ = kdtree.search_radius_vector_3d(vertex, radius)
 
-        ## compute sigma_s
-        neighbours = vertices[neightbours_idx]
+        neighbours = vertices[neightbours_idx[1:]] # exclude itself
         offsets = np.abs(np.dot(vertex - neighbours, v_normals[i]))
         sigma_s = np.std(offsets)
-        sigma_s = max(sigma_s, 1e-6)
+        sigma_s = np.maximum(sigma_s, 1e-6)
+        assert sigma_s.shape == ()
 
-        diffs = vertex - neighbours # (B, 3)
+        # weighted sum
+        diffs = - (vertex - neighbours) # (B, 3)
         ds = np.linalg.norm(diffs, axis=1)  # (B,)
         dr = np.dot(diffs, v_normals[i]) # (B,)
 
-        w = np.exp(-ds**2 / 2 / sigma_c**2) * np.exp(-dr**2 / 2 / sigma_s**2) # (B,)
+        w = np.exp(-ds**2 / 2 * sigma_c**2) * np.exp(-dr**2 / 2 * sigma_s**2) # (B,)
         summation = np.sum(w * dr)
         normalizer = np.sum(w)
         de_vertices[i] = vertex + v_normals[i] * summation / normalizer
@@ -114,7 +113,7 @@ def main(mesh_name):
     )
 
     # perform bilateral mesh denoising
-    new_mesh = bmd_n_iter(mesh, 3)
+    new_mesh = bmd_n_iter(mesh, 1)
     new_mesh.compute_vertex_normals()
     o3d.visualization.draw_geometries([new_mesh])
 
