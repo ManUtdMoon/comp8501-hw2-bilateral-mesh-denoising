@@ -8,6 +8,8 @@ import click
 def main(mesh_name):
     # read mesh
     mesh = o3d.io.read_triangle_mesh(f"data/mesh/{mesh_name}")
+    rot = mesh.get_rotation_matrix_from_xyz((0, np.pi, 0))
+    mesh.rotate(rot, center=mesh.get_center())
 
     # visualize
     mesh.compute_vertex_normals()
